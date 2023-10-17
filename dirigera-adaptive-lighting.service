@@ -1,0 +1,15 @@
+[Unit]
+Description=Tunes the IKEA color temperature lights to match the sun's color temperature.
+Documentation=https://github.com/balint777/b22
+After=network.target
+
+[Service]
+Environment=NODE_PORT=3001
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/balint777/b22
+ExecStart=/usr/bin/npm start
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
