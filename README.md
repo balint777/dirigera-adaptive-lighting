@@ -1,4 +1,4 @@
-# b22 home automation scripts
+# Home Automation Scripts
 
 ## DIRIGERA Adaptive Lighting Service
 Install npm dependencies 
