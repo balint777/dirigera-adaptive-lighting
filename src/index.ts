@@ -20,7 +20,8 @@ createDirigeraClient({ accessToken: DIRIGERA_TOKEN })
 
     const colorTemp = Math.round((MIN_TEMP * 1.0) + (Math.max(fraction,0) * (MAX_TEMP - MIN_TEMP)));
   
-    console.log(`${colorTemp} K`);
+    if (lights.length > 1) console.log(`Setting ${lights.length} lights to ${colorTemp} K`);
+    else if (lights.length == 1) console.log(`Setting ${lights[0].attributes.customName} to ${colorTemp} K`);
 
     return Promise.all(lights.map(light => client.devices.setAttributes({
       id: light.id,
