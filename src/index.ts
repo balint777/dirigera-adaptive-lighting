@@ -37,14 +37,14 @@ createDirigeraClient({ accessToken: DIRIGERA_TOKEN })
 
   const updateLambda = () => updateColorTemperature(Array.from(onColorTemperatureLights));
 
-  setInterval(updateLambda, 60000);
+  setInterval(updateLambda, 60*1000);
   updateLambda();
 
   client.startListeningForUpdates(async (updateEvent) => {
     const light = colorTemperatureLights.find(light => light.id == updateEvent.data.id);
     if (typeof light == 'undefined') return;
 
-    if (isColorTemperatureLight(light)) {
+    if (typeof updateEvent.data.attributes.isOn == 'boolean') {
       if (updateEvent.data.attributes.isOn) {
         onColorTemperatureLights.add(light);
         updateColorTemperature([light]);
