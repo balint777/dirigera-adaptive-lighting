@@ -1,5 +1,15 @@
 {
+  "scripts": {
+    "dev": "nodemon -x ts-node src/index.ts",
+    "start": "ts-node src/index.ts"
+  },
   "dependencies": {
-    "dirigera": "^0.11.6"
+    "dirigera": "^0.11.6",
+    "nodemon": "^3.0.1",
+    "suncalc": "^1.9.0",
+    "ts-node": "^10.9.1"
+  },
+  "devDependencies": {
+    "@types/suncalc": "^1.9.0"
   }
 }
