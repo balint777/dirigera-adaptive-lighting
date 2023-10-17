@@ -33,9 +33,10 @@ createDirigeraClient({ accessToken: DIRIGERA_TOKEN })
 
   const lights = await client.lights.list();
   const colorTemperatureLights = lights.filter(isColorTemperatureLight);
-  const onColorTemperatureLights = new Set(colorTemperatureLights.filter(light => light.attributes.isOn));
+  const onColorTemperatureLights = new Set<Light>(colorTemperatureLights.filter(light => light.attributes.isOn));
+  const temporaryExclusion = new Set<Light>();
 
-  const updateLambda = () => updateColorTemperature(Array.from(onColorTemperatureLights));
+  const updateLambda = () => updateColorTemperature(Array.from(onColorTemperatureLights).filter(l => !temporaryExclusion.has(l)));
 
   setInterval(updateLambda, 60*1000);
   updateLambda();
@@ -50,6 +51,13 @@ createDirigeraClient({ accessToken: DIRIGERA_TOKEN })
         updateColorTemperature([light]);
       } else {
         onColorTemperatureLights.delete(light);
+        temporaryExclusion.delete(light);
+      }
+    }
+
+    if (typeof updateEvent.data.attributes.colorTemperature != 'undefined') {
+      if (!temporaryExclusion.has(light)) {
+        temporaryExclusion.add(light);
       }
     }
   })
