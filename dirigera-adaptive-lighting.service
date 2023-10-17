@@ -6,7 +6,7 @@ After=network.target
 [Service]
 Environment=NODE_PORT=3001
 Type=simple
-User=ubuntu
+User=balint777
 WorkingDirectory=/home/balint777/b22
 ExecStart=/usr/bin/npm start
 Restart=on-failure
