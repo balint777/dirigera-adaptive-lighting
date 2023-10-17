@@ -1,5 +1,5 @@
 [Unit]
-Description=Tunes the IKEA color temperature lights to match the sun's color temperature.
+Description=IKEA DIRIGERA Adaptive Lighting Service
 Documentation=https://github.com/balint777/b22
 After=network.target
 
