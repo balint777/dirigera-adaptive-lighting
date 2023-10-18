@@ -1,15 +1,21 @@
 {
+  "type": "module",
   "scripts": {
-    "dev": "nodemon -x ts-node src/index.ts",
-    "start": "ts-node src/index.ts"
+    "dev": "nodemon -x src/index.mjs",
+    "start": "node src/index.mjs"
   },
   "dependencies": {
     "dirigera": "^0.11.6",
     "nodemon": "^3.0.1",
-    "suncalc": "^1.9.0",
-    "ts-node": "^10.9.1"
+    "suncalc": "^1.9.0"
   },
   "devDependencies": {
-    "@types/suncalc": "^1.9.0"
+    "@types/suncalc": "^1.9.0",
+    "eslint": "^8.51.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-jsdoc": "^46.8.2",
+    "eslint-plugin-n": "^16.2.0",
+    "eslint-plugin-promise": "^6.1.1"
   }
 }
