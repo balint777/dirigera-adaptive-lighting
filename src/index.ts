@@ -7,60 +7,73 @@ const LONGITUDE = 20.755862200951483;
 const MAX_TEMP = 5500;
 const MIN_TEMP = 2200;
 
-function isColorTemperatureLight(light: Light) : boolean { return light.capabilities.canReceive.indexOf('colorTemperature') > -1; }
+const ignoreUpdate = new Set<string>();
 
-createDirigeraClient({ accessToken: DIRIGERA_TOKEN })
-.then(async client => {
+async function App() {
+	const client = await createDirigeraClient({ accessToken: DIRIGERA_TOKEN })
 
-  function updateColorTemperature(lights: Array<Light>) : Promise<any[]>
-  {
-    const now = new Date();
-    const sunPosition = getPosition(now, LATITUDE, LONGITUDE);
-    var fraction = sunPosition.altitude * 2.0 / Math.PI;
+	const getOnColorTemperatureLights = async function () : Promise<Array<Light>>
+	{
+		const lights = await client.lights.list();
+		const colorTemperatureLights = lights.filter(l => l.capabilities.canReceive.indexOf('colorTemperature') > -1);
+		return colorTemperatureLights.filter(light => light.attributes.isOn);
+	};
 
-    const colorTemp = Math.round((MIN_TEMP * 1.0) + (Math.max(fraction,0) * (MAX_TEMP - MIN_TEMP)));
-  
-    if (lights.length > 1) console.log(`Setting ${lights.length} lights to ${colorTemp} K`);
-    else if (lights.length == 1) console.log(`Setting ${lights[0].attributes.customName} to ${colorTemp} K`);
+	const updateColorTemperature = function(lights: Array<Light>) : Promise<any[]>
+	{
+		const now = new Date();
+		const sunPosition = getPosition(now, LATITUDE, LONGITUDE);
+		var fraction = sunPosition.altitude * 2.0 / Math.PI;
 
-    return Promise.all(lights.map(light => client.devices.setAttributes({
-      id: light.id,
-      attributes: {
-        colorTemperature: colorTemp
-      },
-    })));
-  }
+		const colorTemp = Math.round((MIN_TEMP * 1.0) + (Math.max(fraction,0) * (MAX_TEMP - MIN_TEMP)));
+	
+		if (lights.length > 1) console.log(`Setting ${lights.length} lights to ${colorTemp} K`);
+		else if (lights.length == 1) console.log(`Setting ${lights[0].attributes.customName} to ${colorTemp} K`);
 
-  const lights = await client.lights.list();
-  const colorTemperatureLights = lights.filter(isColorTemperatureLight);
-  const onColorTemperatureLights = new Set<Light>(colorTemperatureLights.filter(light => light.attributes.isOn));
-  const temporaryExclusion = new Set<Light>();
+		return Promise.all(lights.map(l => client.devices.setAttributes({
+			id: l.id,
+			attributes: {
+				colorTemperature: colorTemp
+			},
+		}).then(_ => {
+			ignoreUpdate.add(l.id);
+		})));
+	};
 
-  const updateLambda = () => updateColorTemperature(Array.from(onColorTemperatureLights).filter(l => !temporaryExclusion.has(l)));
+	const temporaryExclusion = new Set<string>();
 
-  setInterval(updateLambda, 60*1000);
-  updateLambda();
+	const updateLambda = async () => {
+		const onColorTemperatureLights = await getOnColorTemperatureLights();
+		const lightsToBeUpdated = onColorTemperatureLights.filter(l => !temporaryExclusion.has(l.id));
+		updateColorTemperature(lightsToBeUpdated);
+	};
 
-  client.startListeningForUpdates(async (updateEvent) => {
-    const light = colorTemperatureLights.find(light => light.id == updateEvent.data.id);
-    if (typeof light == 'undefined') return;
+	setInterval(updateLambda, 10*1000);
+	updateLambda();
 
-    if (typeof updateEvent.data.attributes.isOn == 'boolean') {
-      if (updateEvent.data.attributes.isOn) {
-        onColorTemperatureLights.add(light);
-        updateColorTemperature([light]);
-      } else {
-        onColorTemperatureLights.delete(light);
-        temporaryExclusion.delete(light);
-      }
-    }
+	client.startListeningForUpdates(async (updateEvent) => {
+		if (updateEvent.data.type != 'light') return;
 
-    if (typeof updateEvent.data.attributes.colorTemperature != 'undefined') {
-      if (!temporaryExclusion.has(light)) {
-        temporaryExclusion.add(light);
-      }
-    }
-  })
-})
+		const light = await client.lights.get(updateEvent.data);
 
+		if (typeof updateEvent.data.attributes.isOn == 'boolean') {
+			if (updateEvent.data.attributes.isOn) {
+				updateColorTemperature([light]);
+			} else {
+				temporaryExclusion.delete(light.id);
+			}
+		}
 
+		if (typeof updateEvent.data.attributes.colorTemperature != 'undefined') {
+			if (ignoreUpdate.has(light.id)) {
+				ignoreUpdate.delete(light.id);
+			} else {
+				if (!temporaryExclusion.has(light.id)) {
+					temporaryExclusion.add(light.id);
+				}
+			}
+		}
+	});
+}
+
+App();
