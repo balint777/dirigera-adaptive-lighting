@@ -48,7 +48,7 @@ async function App() {
 		updateColorTemperature(lightsToBeUpdated);
 	};
 
-	setInterval(updateLambda, 10*1000);
+	setInterval(updateLambda, 1*60*1000);
 	updateLambda();
 
 	client.startListeningForUpdates(async (updateEvent) => {
