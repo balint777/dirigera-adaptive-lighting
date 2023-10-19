@@ -31,7 +31,7 @@ export default class ColorTemperatureController {
 
 	constructor (client) {
 		this.client = client
-		setInterval(this.update.bind(this), 0.1 * 60 * 1000)
+		setInterval(this.update.bind(this), 1 * 60 * 1000)
 		this.update()
 	}
 
