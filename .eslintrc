@@ -21,6 +21,10 @@
     "sourceType": "module"
   },
   "rules": {
+    "jsdoc/require-throws": 1,
+    "jsdoc/sort-tags": 1,
+    "no-tabs": "off",
+    "indent": "off"
   },
   "plugins": [
     "jsdoc"
