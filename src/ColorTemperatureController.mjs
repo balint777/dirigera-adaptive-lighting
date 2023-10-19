@@ -5,16 +5,6 @@ import suncalc from 'suncalc'
 
 export default class ColorTemperatureController {
 	/**
-	 * @type {number}
-	 */
-	MAX_TEMP = 5500
-
-	/**
-	 * @type {number}
-	 */
-	MIN_TEMP = 2200
-
-	/**
 	 * @description The DIRIGERA client
 	 */
 	client
@@ -49,17 +39,20 @@ export default class ColorTemperatureController {
 
 		const fraction = sunPosition.altitude * 2.0 / Math.PI
 
-		const colorTemperature = Math.round((this.MIN_TEMP * 1.0) + (Math.max(fraction, 0) * (this.MAX_TEMP - this.MIN_TEMP)))
+		return Promise.all(lights.map(l => {
+			const minTemp = l.attributes.colorTemperatureMax || 2200
+			const maxTemp = l.attributes.colorTemperatureMin || 5500
+			const colorTemperature = Math.round((minTemp * 1.0) + (Math.max(fraction, 0) * (maxTemp - minTemp)))
+			console.info(`Setting ${l.attributes.customName} in the ${l.room.name} to ${colorTemperature} K`)
 
-		if (lights.length > 1) console.log(`Setting ${lights.length} lights to ${colorTemperature} K`)
-		else if (lights.length === 1) console.log(`Setting ${lights[0].attributes.customName} to ${colorTemperature} K`)
-
-		return Promise.all(lights.map(l => this.client.devices.setAttributes({
-			id: l.id,
-			attributes: {
-				colorTemperature
-			}
-		}).then(() => this.ignoreUpdate.add(l.id))))
+			return this.client.devices.setAttributes({
+				id: l.id,
+				attributes: {
+					colorTemperature
+				}
+			})
+			.then(() => this.ignoreUpdate.add(l.id))
+		}))
 	}
 
 	/**
