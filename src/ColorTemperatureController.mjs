@@ -37,12 +37,23 @@ export default class ColorTemperatureController {
 		const longitude = hubStatus.attributes.coordinates.longitude
 		const sunPosition = suncalc.getPosition(now, latitude, longitude)
 
-		const fraction = sunPosition.altitude * 2.0 / Math.PI
+		const altitude = sunPosition.altitude * 2.0 / Math.PI
 
 		return Promise.all(lights.map(l => {
-			const minTemp = l.attributes.colorTemperatureMax || 2200
-			const maxTemp = l.attributes.colorTemperatureMin || 5500
-			const colorTemperature = Math.round((minTemp * 1.0) + (Math.max(fraction, 0) * (maxTemp - minTemp)))
+			const horizon = 3500
+			const zenith = 5500
+
+			// const minTemp = l.attributes.colorTemperatureMax || 2200
+			// const maxTemp = l.attributes.colorTemperatureMin || 5500
+			/**
+			 * zenith    -| - - - - - - . - - - - - -
+			 *            |       .           .
+			 * altitude  -| -  🌞   - - - - - -  . -
+			 *            |  .                     .
+			 *            | .                       .
+			 * horizon    |. - - - - - - - - - - - - .
+			 */
+			const colorTemperature = Math.round((horizon * 1.0) + (altitude * (zenith - horizon)))
 			console.info(`Setting ${l.attributes.customName} in the ${l.room.name} to ${colorTemperature} K`)
 
 			return this.client.devices.setAttributes({
