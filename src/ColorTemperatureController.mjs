@@ -33,6 +33,14 @@ export default class ColorTemperatureController extends ControllerBase {
 		return temperature
 	}
 
+	adaptedSunColorTemperature (light) {
+		let temp = this.sunColorTemperature
+		if (typeof light.attributes.colorTemperatureMin == 'number') temp = Math.min(temp, light.attributes.colorTemperatureMin);
+		if (typeof light.attributes.colorTemperatureMax == 'number') temp = Math.max(temp, light.attributes.colorTemperatureMax);
+
+		return temp
+	}
+
 	/**
 	 * @description Updates the color temperature of a list of lights
 	 * @param {Array<Light>} lights The list of lights to update the color temperature of
@@ -41,14 +49,13 @@ export default class ColorTemperatureController extends ControllerBase {
 	async _updateColorTemperature (lights) {
 		if (lights.length === 0) return Promise.all([]);
 
-		const currentSunColorTemperature = await this.sunColorTemperature;
-		console.info(`Setting ${lights.length > 1 ? `${lights.length} lights` : lights[0].attributes.customName} to ${currentSunColorTemperature} K`)
-
 		return Promise.all(lights.map(l => {
-
+			const temp = this.adaptedSunColorTemperature(l)
+			console.info(`Setting ${l.attributes.customName} to ${temp} K`)
+			
 			return this.client.lights.setLightTemperature({
 				id: l.id,
-				colorTemperature: currentSunColorTemperature
+				colorTemperature: temp
 			})
 		}))
 	}
@@ -77,7 +84,9 @@ export default class ColorTemperatureController extends ControllerBase {
 	 */
 	async update () {
 		const onColorTemperatureLights = await this.getOnColorTemperatureLights()
-		const lightsToBeUpdated = onColorTemperatureLights.filter(l => !this.temporaryExclusion.has(l.id))
+		const lightsToBeUpdated = onColorTemperatureLights
+			.filter(l => l.isReachable)
+			.filter(l => !this.temporaryExclusion.has(l.id))
 		await this._updateColorTemperature(lightsToBeUpdated)
 	}
 
@@ -101,13 +110,16 @@ export default class ColorTemperatureController extends ControllerBase {
 	 * @param {Light} light The light that was controlled
 	 */
 	async onColorTemperatureChanged (lightColorTemperature, light) {
-		const currentSunColorTemperature = await this.sunColorTemperature;
+		const currentAdaptedSunColorTemperature = this.adaptedSunColorTemperature(light);
 
-		if (Math.abs(lightColorTemperature - currentSunColorTemperature) > 100) {
+		if (Math.abs(lightColorTemperature - currentAdaptedSunColorTemperature) > 100) {
 			if (!this.temporaryExclusion.has(light.id)) {
 				this.temporaryExclusion.add(light.id)
-				console.log(`Excluding ${light.attributes.customName} in the ${light.room.name} from automatic color temperature updates until the next power on`)
+				console.log(`Excluding ${light.attributes.customName} in the ${light.room.name} from automatic color temperature updates`)
 			}
+		} else if (this.temporaryExclusion.has(light.id)) {
+			this.temporaryExclusion.delete(light.id)
+			console.log(`Removing ${light.attributes.customName} in the ${light.room.name} from temporary exclusion list for automatic color temperature updates`)
 		}
 
 	}
