@@ -33,10 +33,20 @@ export default class ColorTemperatureController extends ControllerBase {
 		return temperature
 	}
 
+	/**
+	 * Calculates the closest color temperature to the current color temperature of the
+	 * sun that a specific light can produce
+	 * 
+	 * @param {Light} light 
+	 * @returns {number} the closest color temperature to the current color temperature
+	 *                   of the sun that the light can produce
+	 */
 	adaptedSunColorTemperature (light) {
 		let temp = this.sunColorTemperature
-		if (typeof light.attributes.colorTemperatureMin == 'number') temp = Math.min(temp, light.attributes.colorTemperatureMin);
-		if (typeof light.attributes.colorTemperatureMax == 'number') temp = Math.max(temp, light.attributes.colorTemperatureMax);
+		if (typeof light.attributes.colorTemperatureMin == 'number')
+			temp = Math.min(temp, light.attributes.colorTemperatureMin);
+		if (typeof light.attributes.colorTemperatureMax == 'number')
+			temp = Math.max(temp, light.attributes.colorTemperatureMax);
 
 		return temp
 	}
