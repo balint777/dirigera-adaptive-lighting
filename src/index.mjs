@@ -15,7 +15,7 @@ const DIRIGERA_TOKEN = 'eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImI2NmY0MTMw
  */
 async function App () {
 	const client = await createDirigeraClient({ accessToken: DIRIGERA_TOKEN })
-	const hubStatus = await this.client.hub.status()
+	const hubStatus = await client.hub.status()
 
 	const ctc = new ColorTemperatureController(client, hubStatus.attributes.coordinates.latitude, hubStatus.attributes.coordinates.longitude)
 	// const lic = new LightLevelController(client, hubStatus.attributes.coordinates.latitude, hubStatus.attributes.coordinates.longitude)
