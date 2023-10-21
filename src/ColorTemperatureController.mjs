@@ -3,32 +3,34 @@
  * @typedef {import('dirigera').DirigeraClient} DirigeraClient
  */
 import suncalc from 'suncalc'
+import ControllerBase from './ControllerBase.mjs'
 
-export default class ColorTemperatureController {
-	/**
-	 * @description The DIRIGERA client
-	 * @type {DirigeraClient}
-	 */
-	client
-
+export default class ColorTemperatureController extends ControllerBase {
 	/**
 	 * @type {Set<string>}
 	 */
 	temporaryExclusion = new Set()
 
-	/**
-	 * @type {Set<string>}
-	 */
-	ignoreUpdate = new Set()
+	get sunColorTemperature () {
 
-	/**
-	 * @description Creates a new instance of the color temperature controller
-	 * @param {DirigeraClient} client The DIRIGERA client
-	 */
-	constructor (client) {
-		this.client = client
-		setInterval(this.update.bind(this), 1 * 60 * 1000)
-		this.update()
+		const now = new Date()
+		const sunPosition = suncalc.getPosition(now, this._latitude, this._longitude)
+
+		const altitude = sunPosition.altitude * 2.0 / Math.PI
+
+		const horizon = 3000
+		const zenith = 6000
+
+		/**
+		 * zenith    -| - - - - - - . - - - - - -
+		 *            |       .           .
+		 * altitude  -| -  🌞   - - - - - -  . -
+		 *            |  .                     .
+		 *            | .                       .
+		 * horizon    |. - - - - - - - - - - - - .
+		 */
+		const temperature = Math.round((horizon * 1.0) + (altitude * (zenith - horizon)))
+		return temperature
 	}
 
 	/**
@@ -37,29 +39,26 @@ export default class ColorTemperatureController {
 	 * @returns {Promise<any[]>} A promise that resolves if all lights has been set
 	 */
 	async _updateColorTemperature (lights) {
-		const hubStatus = await this.client.hub.status()
+		if (lights.length === 0) return Promise.all([]);
 
-		const now = new Date()
-		const latitude = hubStatus.attributes.coordinates.latitude
-		const longitude = hubStatus.attributes.coordinates.longitude
-		const sunPosition = suncalc.getPosition(now, latitude, longitude)
-
-		const fraction = sunPosition.altitude * 2.0 / Math.PI
+		const currentSunColorTemperature = await this.sunColorTemperature;
+		console.info(`Setting ${lights.length > 1 ? `${lights.length} lights` : lights[0].attributes.customName} to ${currentSunColorTemperature} K`)
 
 		return Promise.all(lights.map(l => {
-			const minTemp = l.attributes.colorTemperatureMax || 2200
-			const maxTemp = l.attributes.colorTemperatureMin || 5500
-			const colorTemperature = Math.round((minTemp * 1.0) + (Math.max(fraction, 0) * (maxTemp - minTemp)))
-			console.info(`Setting ${l.attributes.customName} in the ${l.room.name} to ${colorTemperature} K`)
 
-			return this.client.devices.setAttributes({
+			return this.client.lights.setLightTemperature({
 				id: l.id,
-				attributes: {
-					colorTemperature
-				}
+				colorTemperature: currentSunColorTemperature
 			})
-			.then(() => this.ignoreUpdate.add(l.id))
 		}))
+	}
+
+	/**
+	 * @description Checks if a light supports color temperature adjustment
+	 * @param {Light} light The light to check
+	 */
+	isColorTemperatureCapable (light) {
+		return light.capabilities.canReceive.indexOf('colorTemperature') > -1
 	}
 
 	/**
@@ -68,7 +67,7 @@ export default class ColorTemperatureController {
 	 */
 	async getOnColorTemperatureLights () {
 		const lights = await this.client.lights.list()
-		const colorTemperatureLights = lights.filter(l => l.capabilities.canReceive.indexOf('colorTemperature') > -1)
+		const colorTemperatureLights = lights.filter(this.isColorTemperatureCapable)
 		return colorTemperatureLights.filter(light => light.attributes.isOn)
 	}
 
@@ -90,23 +89,26 @@ export default class ColorTemperatureController {
 	async onIsOnChanged (isOn, light) {
 		if (isOn) {
 			await this._updateColorTemperature([light])
-		} else {
+		} else if (this.temporaryExclusion.has(light.id)) {
 			this.temporaryExclusion.delete(light.id)
+			console.log(`Removing ${light.attributes.customName} in the ${light.room.name} from temporary exclusion list for automatic color temperature updates`)
 		}
 	}
 
 	/**
 	 * @description Called when the color temperature of a light was changed
-	 * @param {number} colorTemperature The new color temperature value in Kelvin
+	 * @param {number} lightColorTemperature The color temperature value of the light in Kelvins
 	 * @param {Light} light The light that was controlled
 	 */
-	onColorTemperatureChanged (colorTemperature, light) {
-		if (this.ignoreUpdate.has(light.id)) {
-			this.ignoreUpdate.delete(light.id)
-		} else {
+	async onColorTemperatureChanged (lightColorTemperature, light) {
+		const currentSunColorTemperature = await this.sunColorTemperature;
+
+		if (Math.abs(lightColorTemperature - currentSunColorTemperature) > 100) {
 			if (!this.temporaryExclusion.has(light.id)) {
 				this.temporaryExclusion.add(light.id)
+				console.log(`Excluding ${light.attributes.customName} in the ${light.room.name} from automatic color temperature updates until the next power on`)
 			}
 		}
+
 	}
 }

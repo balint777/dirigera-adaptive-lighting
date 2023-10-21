@@ -3,6 +3,7 @@
  */
 import { createDirigeraClient } from 'dirigera'
 import ColorTemperatureController from './ColorTemperatureController.mjs'
+import LightLevelController from './LightLevelController.mjs'
 
 /**
  * @type {string}
@@ -14,8 +15,10 @@ const DIRIGERA_TOKEN = 'eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImI2NmY0MTMw
  */
 async function App () {
 	const client = await createDirigeraClient({ accessToken: DIRIGERA_TOKEN })
+	const hubStatus = await this.client.hub.status()
 
-	const ctc = new ColorTemperatureController(client)
+	const ctc = new ColorTemperatureController(client, hubStatus.attributes.coordinates.latitude, hubStatus.attributes.coordinates.longitude)
+	// const lic = new LightLevelController(client, hubStatus.attributes.coordinates.latitude, hubStatus.attributes.coordinates.longitude)
 
 	client.startListeningForUpdates(async (updateEvent) => {
 		if (updateEvent.data.type !== 'light') return
@@ -26,11 +29,16 @@ async function App () {
 		const light = await client.lights.get({ id: updateEvent.data.id })
 
 		if (typeof updateEvent.data.attributes.isOn === 'boolean') {
-			await ctc.onIsOnChanged(updateEvent.data.attributes.isOn, light)
+			if (ctc.isColorTemperatureCapable(light)) await ctc.onIsOnChanged(updateEvent.data.attributes.isOn, light)
+			// if (lic.isLightLevelCapable(light)) await lic.onIsOnChanged(updateEvent.data.attributes.isOn, light)
 		}
 
 		if (typeof updateEvent.data.attributes.colorTemperature !== 'undefined') {
 			await ctc.onColorTemperatureChanged(updateEvent.data.attributes.colorTemperature, light)
+		}
+
+		if (typeof updateEvent.data.attributes.lightLevel !== 'undefined') {
+			// await lic.onLightLevelChanged(updateEvent.data.attributes.lightLevel, light)
 		}
 	})
 }
