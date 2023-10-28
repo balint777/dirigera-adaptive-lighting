@@ -31,7 +31,7 @@ async function App () {
 				disconnectedLights.add(light.id)
 				if (ctc.isColorTemperatureCapable(light)) await ctc.onIsOnChanged(false, light)
 				// if (lic.isLightLevelCapable(light)) await lic.onIsOnChanged(false, light)
-			});
+			})
 	}, 1000 * 60 * 5)
 
 	client.startListeningForUpdates(async (updateEvent) => {
