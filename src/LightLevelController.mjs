@@ -17,10 +17,10 @@ export default class LightLevelController extends ControllerBase {
 	 * @returns {Promise<any[]>} A promise that resolves if all lights has been set
 	 */
 	_updateLightLevel (lights) {
-		if (lights.length === 0) return Promise.all([]);
+		if (lights.length === 0) return Promise.all([])
 
 		const now = new Date()
-		const sunPosition = suncalc.getPosition(now,this._latitude, this._longitude)
+		const sunPosition = suncalc.getPosition(now, this._latitude, this._longitude)
 
 		const altitude = sunPosition.altitude * 2.0 / Math.PI
 
@@ -47,7 +47,12 @@ export default class LightLevelController extends ControllerBase {
 		}))
 	}
 
-	isLightLevelCapable(light) {
+	/**
+	 * @description Checks if a light is capable of receiving light level commands
+	 * @param {Light} light The light to check
+	 * @returns {boolean} True if the light is capable of receiving light level commands, false otherwise
+	 */
+	isLightLevelCapable (light) {
 		return light.capabilities.canReceive.indexOf('lightLevel') > -1
 	}
 

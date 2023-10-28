@@ -12,7 +12,6 @@ export default class ColorTemperatureController extends ControllerBase {
 	temporaryExclusion = new Set()
 
 	get sunColorTemperature () {
-
 		const now = new Date()
 		const sunPosition = suncalc.getPosition(now, this._latitude, this._longitude)
 
@@ -24,7 +23,7 @@ export default class ColorTemperatureController extends ControllerBase {
 		/**
 		 * zenith    -| - - - - - - . - - - - - -
 		 *            |       .           .
-		 * altitude  -| -  🌞   - - - - - -  . -
+		 * altitude  -|- - 🌞 - - - - - - - -.- -
 		 *            |  .                     .
 		 *            | .                       .
 		 * horizon    |. - - - - - - - - - - - - .
@@ -36,17 +35,18 @@ export default class ColorTemperatureController extends ControllerBase {
 	/**
 	 * Calculates the closest color temperature to the current color temperature of the
 	 * sun that a specific light can produce
-	 * 
-	 * @param {Light} light 
+	 * @param {Light} light The light to calculate the color temperature for closest to the sun that the light can produce
 	 * @returns {number} the closest color temperature to the current color temperature
 	 *                   of the sun that the light can produce
 	 */
 	adaptedSunColorTemperature (light) {
 		let temp = this.sunColorTemperature
-		if (typeof light.attributes.colorTemperatureMin == 'number')
-			temp = Math.min(temp, light.attributes.colorTemperatureMin);
-		if (typeof light.attributes.colorTemperatureMax == 'number')
-			temp = Math.max(temp, light.attributes.colorTemperatureMax);
+		if (typeof light.attributes.colorTemperatureMin === 'number') {
+			temp = Math.min(temp, light.attributes.colorTemperatureMin)
+		}
+		if (typeof light.attributes.colorTemperatureMax === 'number') {
+			temp = Math.max(temp, light.attributes.colorTemperatureMax)
+		}
 
 		return temp
 	}
@@ -57,12 +57,12 @@ export default class ColorTemperatureController extends ControllerBase {
 	 * @returns {Promise<any[]>} A promise that resolves if all lights has been set
 	 */
 	async _updateColorTemperature (lights) {
-		if (lights.length === 0) return Promise.all([]);
+		if (lights.length === 0) return Promise.all([])
 
 		return Promise.all(lights.map(l => {
 			const temp = this.adaptedSunColorTemperature(l)
 			console.info(`Setting ${l.attributes.customName} to ${temp} K`)
-			
+
 			return this.client.lights.setLightTemperature({
 				id: l.id,
 				colorTemperature: temp
@@ -73,6 +73,7 @@ export default class ColorTemperatureController extends ControllerBase {
 	/**
 	 * @description Checks if a light supports color temperature adjustment
 	 * @param {Light} light The light to check
+	 * @returns {boolean} True if the light supports color temperature adjustment, false otherwise
 	 */
 	isColorTemperatureCapable (light) {
 		return light.capabilities.canReceive.indexOf('colorTemperature') > -1
@@ -120,7 +121,7 @@ export default class ColorTemperatureController extends ControllerBase {
 	 * @param {Light} light The light that was controlled
 	 */
 	async onColorTemperatureChanged (lightColorTemperature, light) {
-		const currentAdaptedSunColorTemperature = this.adaptedSunColorTemperature(light);
+		const currentAdaptedSunColorTemperature = this.adaptedSunColorTemperature(light)
 
 		if (Math.abs(lightColorTemperature - currentAdaptedSunColorTemperature) > 100) {
 			if (!this.temporaryExclusion.has(light.id)) {
@@ -131,6 +132,5 @@ export default class ColorTemperatureController extends ControllerBase {
 			this.temporaryExclusion.delete(light.id)
 			console.log(`Removing ${light.attributes.customName} in the ${light.room.name} from temporary exclusion list for automatic color temperature updates`)
 		}
-
 	}
 }

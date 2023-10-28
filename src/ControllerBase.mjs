@@ -5,20 +5,20 @@
 
 export default class ControllerBase {
 	/**
-	 * @description The DIRIGERA client
 	 * @type {DirigeraClient}
+	 * @description The DIRIGERA client
 	 */
 	client
 
 	/**
-	 * @description The longitude of the DIRIGERA hub
 	 * @type {number}
+	 * @description The longitude of the DIRIGERA hub
 	 */
 	_longitude
 
 	/**
-	 * @description The latitude of the DIRIGERA hub
 	 * @type {number}
+	 * @description The latitude of the DIRIGERA hub
 	 */
 	_latitude
 
