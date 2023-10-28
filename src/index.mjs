@@ -2,8 +2,7 @@
  * @typedef {import('dirigera').Light} Light
  */
 import { createDirigeraClient } from 'dirigera'
-import ColorTemperatureController from './ColorTemperatureController.mjs'
-import LightLevelController from './LightLevelController.mjs'
+import LightController from './LightController.mjs'
 
 /**
  * @type {string}
@@ -17,8 +16,7 @@ async function App () {
 	const client = await createDirigeraClient({ accessToken: DIRIGERA_TOKEN })
 	const hubStatus = await client.hub.status()
 
-	const ctc = new ColorTemperatureController(client, hubStatus.attributes.coordinates.latitude, hubStatus.attributes.coordinates.longitude)
-	// const lic = new LightLevelController(client, hubStatus.attributes.coordinates.latitude, hubStatus.attributes.coordinates.longitude)
+	const ctc = new LightController(client, hubStatus.attributes.coordinates.latitude, hubStatus.attributes.coordinates.longitude)
 
 	const disconnectedLights = new Set()
 
@@ -46,7 +44,6 @@ async function App () {
 
 		if (typeof updateEvent.data.attributes.isOn === 'boolean') {
 			if (ctc.isColorTemperatureCapable(light)) await ctc.onIsOnChanged(updateEvent.data.attributes.isOn, light)
-			// if (lic.isLightLevelCapable(light)) await lic.onIsOnChanged(updateEvent.data.attributes.isOn, light)
 		}
 
 		if (typeof updateEvent.data.attributes.colorTemperature !== 'undefined') {
@@ -54,7 +51,7 @@ async function App () {
 		}
 
 		if (typeof updateEvent.data.attributes.lightLevel !== 'undefined') {
-			// await lic.onLightLevelChanged(updateEvent.data.attributes.lightLevel, light)
+			await ctc.onLightLevelChanged(updateEvent.data.attributes.lightLevel, light)
 		}
 	})
 }
