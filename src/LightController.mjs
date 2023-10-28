@@ -161,7 +161,7 @@ export default class LightController {
 	 * @param {Light} light The light to update the attributes of
 	 * @returns {Promise<void>} A promise that resolves when the light has been updated
 	 */
-	async updateSingleLight (light) {
+	updateSingleLight (light) {
 		const attributes = {}
 		if (this.isLightLevelCapable(light) && !this.temporaryLightLevelExclusion.has(light.id)) {
 			attributes.lightLevel = this._updateLightLevel(light)
@@ -171,9 +171,12 @@ export default class LightController {
 		}
 		console.info(`Setting ${light.attributes.customName} attributes ${JSON.stringify(attributes)}`)
 		return this.client.devices.setAttributes({
-			id: light.id,
-			attributes
-		})
+				id: light.id,
+				attributes
+			})
+			.catch(err => {
+				console.error(`Failed to set attributes for ${light.attributes.customName}: ${err.message}`)
+			})
 	}
 
 	/**
