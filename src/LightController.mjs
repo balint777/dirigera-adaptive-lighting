@@ -55,7 +55,6 @@ export default class LightController {
 	 *                   of the sun that the light can produce
 	 */
 	adaptedSunColorTemperature (light) {
-		
 		const now = new Date()
 		const sunPosition = suncalc.getPosition(now, this._latitude, this._longitude)
 
@@ -73,8 +72,8 @@ export default class LightController {
 		 * horizon   -|.- - - - - - - - - - - - -.-
 		 */
 		const temperature = Math.round((horizon * 1.0) + (altitude * (zenith - horizon)))
-		var temp = temperature
-		
+		let temp = temperature
+
 		if (typeof light.attributes.colorTemperatureMin === 'number') {
 			temp = Math.min(temp, light.attributes.colorTemperatureMin)
 		}
@@ -91,7 +90,6 @@ export default class LightController {
 	 * @returns {number} The new color temperature
 	 */
 	_updateColorTemperature (light) {
-
 		const temp = this.adaptedSunColorTemperature(light)
 		return temp
 	}
@@ -104,19 +102,18 @@ export default class LightController {
 	_updateLightLevel (light) {
 		const now = new Date()
 		const timeofday = (now.getHours() * 60 + now.getMinutes()) * 60 + now.getSeconds()
-		
+
 		/**
 		 * f(x) = 600 * sin((timeofday-21600)*pi/(79200 - 21600))
-		 * 
-		 * 100 |                          *******************************************            
-		 *     |                        **********************************************           
-		 *   1 |                      **************************************************         
+		 * 100 |                          *******************************************
+		 *     |                        **********************************************
+		 *   1 |                      **************************************************
 		 *     +-------------------------------------------------------------------------------->
-		 *                          6:00                                              22:00      
+		 *                          6:00                                              22:00
 		 *                       (21'600 s)                                         (79'200 s)
 		 */
-		const lightLevel = Math.min(Math.max(600 * Math.sin((timeofday-21600)*Math.PI/(79200 - 21600)), 1), 100)
-		
+		const lightLevel = Math.min(Math.max(600 * Math.sin((timeofday - 21600) * Math.PI / (79200 - 21600)), 1), 100)
+
 		return lightLevel
 	}
 
@@ -164,7 +161,7 @@ export default class LightController {
 	 * @param {Light} light The light to update the attributes of
 	 * @returns {Promise<void>} A promise that resolves when the light has been updated
 	 */
-	async updateSingleLight(light) {
+	async updateSingleLight (light) {
 		const attributes = {}
 		if (this.isLightLevelCapable(light) && !this.temporaryLightLevelExclusion.has(light.id)) {
 			attributes.lightLevel = this._updateLightLevel(light)
