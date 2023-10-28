@@ -20,8 +20,24 @@ async function App () {
 	const ctc = new ColorTemperatureController(client, hubStatus.attributes.coordinates.latitude, hubStatus.attributes.coordinates.longitude)
 	// const lic = new LightLevelController(client, hubStatus.attributes.coordinates.latitude, hubStatus.attributes.coordinates.longitude)
 
+	const disconnectedLights = new Set()
+
+	// Poll the discovered lights every 5 minutes to recognize them as off
+	setInterval(async () => {
+		const lights = await client.lights.list()
+		lights
+			.filter(light => !light.isReachable && !disconnectedLights.has(light.id))
+			.forEach(async light => {
+				disconnectedLights.add(light.id)
+				if (ctc.isColorTemperatureCapable(light)) await ctc.onIsOnChanged(false, light)
+				// if (lic.isLightLevelCapable(light)) await lic.onIsOnChanged(false, light)
+			});
+	}, 1000 * 60 * 5)
+
 	client.startListeningForUpdates(async (updateEvent) => {
 		if (updateEvent.data.type !== 'light') return
+
+		if (disconnectedLights.has(updateEvent.data.id)) disconnectedLights.delete(updateEvent.data.id)
 
 		/**
 		 * @type {Light}
