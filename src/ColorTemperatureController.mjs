@@ -21,12 +21,12 @@ export default class ColorTemperatureController extends ControllerBase {
 		const zenith = 6000
 
 		/**
-		 * zenith    -| - - - - - - . - - - - - -
+		 * zenith    -| - - - - - - . - - - - - - -
 		 *            |       .           .
-		 * altitude  -|- - 🌞 - - - - - - - -.- -
+		 * altitude  -|- - 🌞 - - - - - - - -.- - -
 		 *            |  .                     .
 		 *            | .                       .
-		 * horizon    |. - - - - - - - - - - - - .
+		 * horizon   -|.- - - - - - - - - - - - -.-
 		 */
 		const temperature = Math.round((horizon * 1.0) + (altitude * (zenith - horizon)))
 		return temperature
