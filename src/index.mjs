@@ -33,7 +33,10 @@ async function App () {
 	}, 1000 * 60 * 5)
 
 	client.startListeningForUpdates(async (updateEvent) => {
-		if (updateEvent.data.type !== 'light') return
+		if (updateEvent.data.type !== 'light') {
+			// if (updateEvent.type !== 'pong' && updateEvent.data.deviceType !== 'environmentSensor') console.log(JSON.stringify(updateEvent, null, 2))
+			return
+		}
 
 		if (disconnectedLights.has(updateEvent.data.id)) disconnectedLights.delete(updateEvent.data.id)
 
@@ -42,7 +45,7 @@ async function App () {
 		 */
 		const light = await client.lights.get({ id: updateEvent.data.id })
 
-		if (typeof updateEvent.data.attributes.isOn === 'boolean') {
+		if (typeof updateEvent.data.attributes.isOn !== 'undefined') {
 			if (ctc.isColorTemperatureCapable(light)) await ctc.onIsOnChanged(updateEvent.data.attributes.isOn, light)
 		}
 
