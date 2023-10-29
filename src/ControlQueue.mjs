@@ -10,7 +10,7 @@ export class ControlQueue {
 	client
 
 	/**
-	 * @type {Object.<string, Array.<Function>>}
+	 * @type {{ [key: string]: Array<Function> }}
 	 */
 	_queue = {}
 
