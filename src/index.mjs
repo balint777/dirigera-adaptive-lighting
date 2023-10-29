@@ -47,11 +47,11 @@ async function App () {
 				if (typeof updateEvent.data.attributes.isOn !== 'undefined') {
 					await ctc.onIsOnChanged(updateEvent.data.attributes.isOn, light)
 				}
-		
+
 				if (typeof updateEvent.data.attributes.colorTemperature !== 'undefined') {
 					await ctc.onColorTemperatureChanged(updateEvent.data.attributes.colorTemperature, light)
 				}
-		
+
 				if (typeof updateEvent.data.attributes.lightLevel !== 'undefined') {
 					await ctc.onLightLevelChanged(updateEvent.data.attributes.lightLevel, light)
 				}
