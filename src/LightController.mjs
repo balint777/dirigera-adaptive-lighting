@@ -3,6 +3,7 @@
  * @typedef {import('dirigera').DirigeraClient} DirigeraClient
  */
 import suncalc from 'suncalc'
+import { ControlQueue } from './ControlQueue.mjs'
 
 export default class LightController {
 	/**
@@ -34,6 +35,11 @@ export default class LightController {
 	_latitude
 
 	/**
+	 * @type ControlQueue
+	 */
+	_controlQueue
+
+	/**
 	 * @description Creates a new instance of the color temperature controller
 	 * @param {DirigeraClient} client The DIRIGERA client
 	 * @param {number} latitude The latitude of the DIRIGERA hub
@@ -43,6 +49,7 @@ export default class LightController {
 		this.client = client
 		this._longitude = longitude
 		this._latitude = latitude
+		this._controlQueue = new ControlQueue(client)
 		setInterval(this.update.bind(this), 1 * 60 * 1000)
 		this.update()
 	}
@@ -159,27 +166,21 @@ export default class LightController {
 	/**
 	 * @description Updates the attributes of a single light
 	 * @param {Light} light The light to update the attributes of
-	 * @returns {Promise<void>} A promise that resolves when the light has been updated
 	 */
 	updateSingleLight (light) {
-		const attributes = {}
 		if (this.isLightLevelCapable(light) && !this.temporaryLightLevelExclusion.has(light.id)) {
-			// attributes.lightLevel = this._updateLightLevel(light)
+			const lightLevel = this._updateLightLevel(light)
+			if (light.attributes.lightLevel !== lightLevel) {
+				this._controlQueue.schedule(light, 'lightLevel', lightLevel)
+			}
 		}
+
 		if (this.isColorTemperatureCapable(light) && !this.temporaryColorTemperatureExclusion.has(light.id)) {
-			attributes.colorTemperature = this._updateColorTemperature(light)
+			const colorTemperature = this._updateColorTemperature(light)
+			if (light.attributes.colorTemperature !== colorTemperature) {
+				this._controlQueue.schedule(light, 'colorTemperature', colorTemperature)
+			}
 		}
-
-		if (Object.keys(attributes).length === 0) return Promise.resolve()
-
-		console.info(`Setting ${light.attributes.customName} attributes ${JSON.stringify(attributes)}`)
-		return this.client.devices.setAttributes({
-				id: light.id,
-				attributes
-			})
-			.catch(err => {
-				console.error(`Failed to set attributes for ${light.attributes.customName}: ${err.message}`)
-			})
 	}
 
 	/**
@@ -197,7 +198,7 @@ export default class LightController {
 			console.log(`Removing ${light.attributes.customName} in the ${light.room.name} from temporary exclusion list for automatic light level updates`)
 		}
 
-		await this.updateSingleLight(light)
+		if (isOn) await this.updateSingleLight(light)
 	}
 
 	/**
