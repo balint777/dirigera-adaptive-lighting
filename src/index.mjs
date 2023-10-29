@@ -18,19 +18,6 @@ async function App () {
 
 	const ctc = new LightController(client, hubStatus.attributes.coordinates.latitude, hubStatus.attributes.coordinates.longitude)
 
-	const disconnectedLights = new Set()
-
-	// Poll the discovered lights every 5 minutes to recognize them as off
-	setInterval(async () => {
-		const lights = await client.lights.list()
-		lights
-			.filter(light => !light.isReachable && !disconnectedLights.has(light.id))
-			.forEach(async light => {
-				disconnectedLights.add(light.id)
-				await ctc.onIsOnChanged(false, light)
-			})
-	}, 1000 * 60 * 5)
-
 	client.startListeningForUpdates(async (updateEvent) => {
 		if (updateEvent.data.deviceType !== 'light') {
 			// if (updateEvent.type !== 'pong' && updateEvent.data.deviceType !== 'environmentSensor') console.log(JSON.stringify(updateEvent, null, 2))
@@ -56,11 +43,6 @@ async function App () {
 					await ctc.onLightLevelChanged(updateEvent.data.attributes.lightLevel, light)
 				}
 			} else if (typeof updateEvent.data.isReachable !== 'undefined') {
-				if (!updateEvent.data.isReachable) {
-					disconnectedLights.add(updateEvent.data.id)
-				} else {
-					disconnectedLights.delete(updateEvent.data.id)
-				}
 				await ctc.onIsOnChanged(updateEvent.data.isReachable, light)
 			}
 		}
