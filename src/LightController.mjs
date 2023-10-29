@@ -117,12 +117,19 @@ export default class LightController {
 		 *     |                        **********************************************
 		 *   1 |                      **************************************************
 		 *     +-------------------------------------------------------------------------------->
-		 *                          6:00                                              22:00
-		 *                       (21'600 s)                                         (79'200 s)
+		 *                          5:30                                              21:30
 		 */
-		const lightLevel = Math.min(Math.max(600 * Math.sin((timeofday - 21600) * Math.PI / (79200 - 21600)), 1), 100)
+		const windDownTargetHour = 21
+		const windDownTargetMinute = 30
+		const windDownTarget = (windDownTargetHour * 60 + windDownTargetMinute) * 60
 
-		return lightLevel
+		const windUpStartHour = 5
+		const windUpStartMinute = 30
+		const windUpStart = (windUpStartHour * 60 + windUpStartMinute) * 60
+
+		const lightLevel = Math.min(Math.max(600 * Math.sin((timeofday - windUpStart) * Math.PI / (windDownTarget - windUpStart)), 1), 100)
+
+		return Math.round(lightLevel)
 	}
 
 	/**
@@ -169,17 +176,17 @@ export default class LightController {
 	 * @param {Light} light The light to update the attributes of
 	 */
 	updateSingleLight (light) {
-		if (this.isLightLevelCapable(light) && !this.temporaryLightLevelExclusion.has(light.id)) {
-			const lightLevel = this._updateLightLevel(light)
-			if (light.attributes.lightLevel !== lightLevel) {
-				this._controlQueue.schedule(light, 'lightLevel', lightLevel)
-			}
-		}
-
 		if (this.isColorTemperatureCapable(light) && !this.temporaryColorTemperatureExclusion.has(light.id)) {
 			const colorTemperature = this._updateColorTemperature(light)
 			if (light.attributes.colorTemperature !== colorTemperature) {
 				this._controlQueue.schedule(light, 'colorTemperature', colorTemperature)
+			}
+		}
+
+		if (this.isLightLevelCapable(light) && !this.temporaryLightLevelExclusion.has(light.id)) {
+			const lightLevel = this._updateLightLevel(light)
+			if (light.attributes.lightLevel !== lightLevel) {
+				this._controlQueue.schedule(light, 'lightLevel', lightLevel)
 			}
 		}
 	}

@@ -33,7 +33,7 @@ export class ControlQueue {
 			const attributes = {}
 			attributes[attribute] = value
 
-			console.info(`Setting ${device.attributes.customName} attributes ${JSON.stringify(attributes)}`)
+			console.info(`Setting ${device.room?.name} ${device.attributes.customName} ${attribute} to ${value}`)
 			return this.client.devices.setAttributes({
 				id: device.id,
 				attributes
