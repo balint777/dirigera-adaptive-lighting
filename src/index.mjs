@@ -27,34 +27,42 @@ async function App () {
 			.filter(light => !light.isReachable && !disconnectedLights.has(light.id))
 			.forEach(async light => {
 				disconnectedLights.add(light.id)
-				if (ctc.isColorTemperatureCapable(light)) await ctc.onIsOnChanged(false, light)
-				// if (lic.isLightLevelCapable(light)) await lic.onIsOnChanged(false, light)
+				await ctc.onIsOnChanged(false, light)
 			})
 	}, 1000 * 60 * 5)
 
 	client.startListeningForUpdates(async (updateEvent) => {
-		if (updateEvent.data.type !== 'light') {
+		if (updateEvent.data.deviceType !== 'light') {
 			// if (updateEvent.type !== 'pong' && updateEvent.data.deviceType !== 'environmentSensor') console.log(JSON.stringify(updateEvent, null, 2))
 			return
 		}
-
-		if (disconnectedLights.has(updateEvent.data.id)) disconnectedLights.delete(updateEvent.data.id)
 
 		/**
 		 * @type {Light}
 		 */
 		const light = await client.lights.get({ id: updateEvent.data.id })
 
-		if (typeof updateEvent.data.attributes.isOn !== 'undefined') {
-			if (ctc.isColorTemperatureCapable(light)) await ctc.onIsOnChanged(updateEvent.data.attributes.isOn, light)
-		}
-
-		if (typeof updateEvent.data.attributes.colorTemperature !== 'undefined') {
-			await ctc.onColorTemperatureChanged(updateEvent.data.attributes.colorTemperature, light)
-		}
-
-		if (typeof updateEvent.data.attributes.lightLevel !== 'undefined') {
-			await ctc.onLightLevelChanged(updateEvent.data.attributes.lightLevel, light)
+		if (updateEvent.type === 'deviceStateChanged') {
+			if (typeof updateEvent.data.attributes !== 'undefined') {
+				if (typeof updateEvent.data.attributes.isOn !== 'undefined') {
+					await ctc.onIsOnChanged(updateEvent.data.attributes.isOn, light)
+				}
+		
+				if (typeof updateEvent.data.attributes.colorTemperature !== 'undefined') {
+					await ctc.onColorTemperatureChanged(updateEvent.data.attributes.colorTemperature, light)
+				}
+		
+				if (typeof updateEvent.data.attributes.lightLevel !== 'undefined') {
+					await ctc.onLightLevelChanged(updateEvent.data.attributes.lightLevel, light)
+				}
+			} else if (typeof updateEvent.data.isReachable !== 'undefined') {
+				if (!updateEvent.data.isReachable) {
+					disconnectedLights.add(updateEvent.data.id)
+				} else {
+					disconnectedLights.delete(updateEvent.data.id)
+				}
+				await ctc.onIsOnChanged(updateEvent.data.isReachable, light)
+			}
 		}
 	})
 }
