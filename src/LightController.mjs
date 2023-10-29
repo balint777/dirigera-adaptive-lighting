@@ -9,12 +9,12 @@ export default class LightController {
 	/**
 	 * @type {Set<string>}
 	 */
-	temporaryColorTemperatureExclusion = new Set()
+	colorTemperatureBlacklist = new Set()
 
 	/**
 	 * @type {Set<string>}
 	 */
-	temporaryLightLevelExclusion = new Set()
+	lightLevelBlacklist = new Set()
 
 	/**
 	 * @type {DirigeraClient}
@@ -176,14 +176,14 @@ export default class LightController {
 	 * @param {Light} light The light to update the attributes of
 	 */
 	updateSingleLight (light) {
-		if (this.isColorTemperatureCapable(light) && !this.temporaryColorTemperatureExclusion.has(light.id)) {
+		if (this.isColorTemperatureCapable(light) && !this.colorTemperatureBlacklist.has(light.id)) {
 			const colorTemperature = this._updateColorTemperature(light)
 			if (light.attributes.colorTemperature !== colorTemperature) {
 				this._controlQueue.schedule(light, 'colorTemperature', colorTemperature)
 			}
 		}
 
-		if (this.isLightLevelCapable(light) && !this.temporaryLightLevelExclusion.has(light.id)) {
+		if (this.isLightLevelCapable(light) && !this.lightLevelBlacklist.has(light.id)) {
 			const lightLevel = this._updateLightLevel(light)
 			if (light.attributes.lightLevel !== lightLevel) {
 				this._controlQueue.schedule(light, 'lightLevel', lightLevel)
@@ -197,13 +197,13 @@ export default class LightController {
 	 * @param {Light} light The light that was controlled
 	 */
 	async onIsOnChanged (isOn, light) {
-		if (this.temporaryColorTemperatureExclusion.has(light.id)) {
-			this.temporaryColorTemperatureExclusion.delete(light.id)
-			console.log(`Removing ${light.attributes.customName} in the ${light.room.name} from temporary exclusion list for automatic color temperature updates`)
+		if (this.colorTemperatureBlacklist.has(light.id)) {
+			this.colorTemperatureBlacklist.delete(light.id)
+			console.log(`Whitelisting ${light.attributes.customName} in the ${light.room.name} for automatic color temperature updates`)
 		}
-		if (this.temporaryLightLevelExclusion.has(light.id)) {
-			this.temporaryLightLevelExclusion.delete(light.id)
-			console.log(`Removing ${light.attributes.customName} in the ${light.room.name} from temporary exclusion list for automatic light level updates`)
+		if (this.lightLevelBlacklist.has(light.id)) {
+			this.lightLevelBlacklist.delete(light.id)
+			console.log(`Whitelisting ${light.attributes.customName} in the ${light.room.name} for automatic light level updates`)
 		}
 
 		if (isOn) await this.updateSingleLight(light)
@@ -218,13 +218,13 @@ export default class LightController {
 		const currentAdaptedSunColorTemperature = this.adaptedSunColorTemperature(light)
 
 		if (Math.abs(lightColorTemperature - currentAdaptedSunColorTemperature) > 100) {
-			if (!this.temporaryColorTemperatureExclusion.has(light.id)) {
-				this.temporaryColorTemperatureExclusion.add(light.id)
-				console.log(`Excluding ${light.attributes.customName} in the ${light.room.name} from automatic color temperature updates`)
+			if (!this.colorTemperatureBlacklist.has(light.id)) {
+				this.colorTemperatureBlacklist.add(light.id)
+				console.log(`Blacklisting ${light.attributes.customName} in the ${light.room.name} for automatic color temperature updates`)
 			}
-		} else if (this.temporaryColorTemperatureExclusion.has(light.id)) {
-			this.temporaryColorTemperatureExclusion.delete(light.id)
-			console.log(`Removing ${light.attributes.customName} in the ${light.room.name} from temporary exclusion list for automatic color temperature updates`)
+		} else if (this.colorTemperatureBlacklist.has(light.id)) {
+			this.colorTemperatureBlacklist.delete(light.id)
+			console.log(`Whitelisting ${light.attributes.customName} in the ${light.room.name} for automatic color temperature updates`)
 		}
 	}
 
@@ -237,13 +237,13 @@ export default class LightController {
 		const currentLightLevel = this._updateLightLevel(light)
 
 		if (Math.abs(lightLevel - currentLightLevel) > 20) {
-			if (!this.temporaryLightLevelExclusion.has(light.id)) {
-				this.temporaryLightLevelExclusion.add(light.id)
-				console.log(`Excluding ${light.attributes.customName} in the ${light.room.name} from automatic light level updates`)
+			if (!this.lightLevelBlacklist.has(light.id)) {
+				this.lightLevelBlacklist.add(light.id)
+				console.log(`Blacklisting ${light.attributes.customName} in the ${light.room.name} for automatic light level updates`)
 			}
-		} else if (this.temporaryLightLevelExclusion.has(light.id)) {
-			this.temporaryLightLevelExclusion.delete(light.id)
-			console.log(`Removing ${light.attributes.customName} in the ${light.room.name} from temporary exclusion list for automatic light level updates`)
+		} else if (this.lightLevelBlacklist.has(light.id)) {
+			this.lightLevelBlacklist.delete(light.id)
+			console.log(`Whitelisting ${light.attributes.customName} in the ${light.room.name} for automatic light level updates`)
 		}
 	}
 }
