@@ -4,7 +4,6 @@
  */
 
 export class ControlQueue {
-
 	/**
 	 * @type {DirigeraClient}
 	 */
@@ -15,17 +14,20 @@ export class ControlQueue {
 	 */
 	_queue = {}
 
-	constructor(client) {
+	/**
+	 * @param {DirigeraClient} client The DIRIGERA client
+	 */
+	constructor (client) {
 		this.client = client
 	}
-	
+
 	/**
 	 * @param {Device} device The device to control
 	 * @param {string} attribute The attribute to control
 	 * @param {any} value The value to set the attribute to
 	 */
-	schedule(device, attribute, value) {
-		if (typeof this._queue[device.id] === 'undefined') this._queue[device.id] = new Array()
+	schedule (device, attribute, value) {
+		if (typeof this._queue[device.id] === 'undefined') this._queue[device.id] = []
 
 		this._queue[device.id].push(_ => {
 			const attributes = {}
@@ -46,12 +48,12 @@ export class ControlQueue {
 		}
 	}
 
-	async _runQueue(id) {
+	async _runQueue (id) {
 		while (this._queue[id].length > 0) {
 			const ctrl = this._queue[id][0]
 			if (typeof ctrl === 'undefined') break
 			await ctrl()
-			await new Promise(resolve => setTimeout(resolve, 500));
+			await new Promise(resolve => setTimeout(resolve, 500))
 			this._queue[id].shift()
 		}
 	}

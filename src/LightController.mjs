@@ -35,7 +35,8 @@ export default class LightController {
 	_latitude
 
 	/**
-	 * @type ControlQueue
+	 * @type {ControlQueue}
+	 * @description An object that controls the queue of commands sent to the DIRIGERA hub
 	 */
 	_controlQueue
 
