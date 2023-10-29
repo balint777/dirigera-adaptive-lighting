@@ -164,11 +164,14 @@ export default class LightController {
 	updateSingleLight (light) {
 		const attributes = {}
 		if (this.isLightLevelCapable(light) && !this.temporaryLightLevelExclusion.has(light.id)) {
-			attributes.lightLevel = this._updateLightLevel(light)
+			// attributes.lightLevel = this._updateLightLevel(light)
 		}
 		if (this.isColorTemperatureCapable(light) && !this.temporaryColorTemperatureExclusion.has(light.id)) {
 			attributes.colorTemperature = this._updateColorTemperature(light)
 		}
+
+		if (Object.keys(attributes).length === 0) return Promise.resolve()
+
 		console.info(`Setting ${light.attributes.customName} attributes ${JSON.stringify(attributes)}`)
 		return this.client.devices.setAttributes({
 				id: light.id,
