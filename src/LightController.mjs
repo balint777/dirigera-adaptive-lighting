@@ -185,18 +185,16 @@ export default class LightController {
 	 * @param {Light} light The light that was controlled
 	 */
 	async onIsOnChanged (isOn, light) {
-		if (isOn) {
-			await this.updateSingleLight(light)
-		} else {
-			if (this.temporaryColorTemperatureExclusion.has(light.id)) {
-				this.temporaryColorTemperatureExclusion.delete(light.id)
-				console.log(`Removing ${light.attributes.customName} in the ${light.room.name} from temporary exclusion list for automatic color temperature updates`)
-			}
-			if (this.temporaryLightLevelExclusion.has(light.id)) {
-				this.temporaryLightLevelExclusion.delete(light.id)
-				console.log(`Removing ${light.attributes.customName} in the ${light.room.name} from temporary exclusion list for automatic light level updates`)
-			}
+		if (this.temporaryColorTemperatureExclusion.has(light.id)) {
+			this.temporaryColorTemperatureExclusion.delete(light.id)
+			console.log(`Removing ${light.attributes.customName} in the ${light.room.name} from temporary exclusion list for automatic color temperature updates`)
 		}
+		if (this.temporaryLightLevelExclusion.has(light.id)) {
+			this.temporaryLightLevelExclusion.delete(light.id)
+			console.log(`Removing ${light.attributes.customName} in the ${light.room.name} from temporary exclusion list for automatic light level updates`)
+		}
+
+		await this.updateSingleLight(light)
 	}
 
 	/**
