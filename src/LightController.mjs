@@ -236,7 +236,7 @@ export default class LightController {
 	onLightLevelChanged (lightLevel, light) {
 		const currentLightLevel = this._updateLightLevel(light)
 
-		if (Math.abs(lightLevel - currentLightLevel) > 20) {
+		if (Math.abs(lightLevel - currentLightLevel) > 10) {
 			if (!this.lightLevelBlacklist.has(light.id)) {
 				this.lightLevelBlacklist.add(light.id)
 				console.log(`Blacklisting ${light.attributes.customName} in the ${light.room.name} for automatic light level updates`)
