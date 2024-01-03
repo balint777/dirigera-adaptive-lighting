@@ -1,5 +1,3 @@
-# Home Automation Scripts
-
 ## DIRIGERA Adaptive Lighting Service
 Install npm dependencies 
 ```bash
