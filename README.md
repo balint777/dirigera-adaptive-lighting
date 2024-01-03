@@ -4,6 +4,8 @@ Install npm dependencies
 npm install
 ```
 
+Update the WorkingDirectory value in the dirigera-adaptive-lighting.service systemd unit file to match the location of your cloned repo.
+
 Copy the systemd unit file to the system 
 ```bash
 sudo cp dirigera-adaptive-lighting.service /lib/systemd/system
